@@ -41,7 +41,7 @@ ApplicationWindow {
         }
     }
 
-    // fileSystemModel
+    // fileSystemModel is a name set associated root context property set to a pointer to an instance of the DisplayFileSystemModel class
 
     ItemSelectionModel {
         id: sel
@@ -84,8 +84,8 @@ ApplicationWindow {
         }
 
         onActivated : {
-            var url = fileSystemModel.data(index, FileSystemModel.UrlStringRole)
-            Qt.openUrlExternally(url)
+//            var url = fileSystemModel.data(index, FileSystemModel.UrlStringRole)
+//            Qt.openUrlExternally(url)
         }
     }
 }

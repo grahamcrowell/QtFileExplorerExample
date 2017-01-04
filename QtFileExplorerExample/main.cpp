@@ -115,25 +115,27 @@ public:
 
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const Q_DECL_OVERRIDE
     {
+        std::cout << "QModelIndex row = " << index.row() << " column " << index.column() << std::endl;
+        std::cout << "Qt::DisplayRole = " << role << std::endl; // ~ 258 - 262
         std::string tmp_data {};
         if (index.isValid() && role >= SizeRole) {
 
             switch (role) {
             case SizeRole:
-            	tmp_data = std::string(sizeString(fileInfo(index)).toStdString());
-            	std::cout << "model.data [SizeRole] = " << tmp_data << std::endl;
+                tmp_data = std::string(sizeString(fileInfo(index)).toStdString());
+                std::cout << "model.data [SizeRole] = " << tmp_data << std::endl;
                 return QVariant(QString::fromStdString(tmp_data));
             case DisplayableFilePermissionsRole:
-            	tmp_data = std::string(permissionString(fileInfo(index)).toStdString());
-            	std::cout << "model.data [DisplayableFilePermissionsRole] = " << tmp_data << std::endl;
+                tmp_data = std::string(permissionString(fileInfo(index)).toStdString());
+                std::cout << "model.data [DisplayableFilePermissionsRole] = " << tmp_data << std::endl;
                 return QVariant(QString::fromStdString(tmp_data));
             case LastModifiedRole:
-            	tmp_data = std::string(fileInfo(index).lastModified().toString(Qt::SystemLocaleShortDate).toStdString());
-            	std::cout << "model.data [LastModifiedRole] = " << tmp_data << std::endl;
+                tmp_data = std::string(fileInfo(index).lastModified().toString(Qt::SystemLocaleShortDate).toStdString());
+                std::cout << "model.data [LastModifiedRole] = " << tmp_data << std::endl;
                 return QVariant(QString::fromStdString(tmp_data));
             case UrlStringRole:
-            	tmp_data = std::string(QUrl::fromLocalFile(filePath(index)).toString().toStdString());
-            	std::cout << "model.data [UrlStringRole] = " << tmp_data << std::endl;
+                tmp_data = std::string(QUrl::fromLocalFile(filePath(index)).toString().toStdString());
+                std::cout << "model.data [UrlStringRole] = " << tmp_data << std::endl;
                 return QVariant(QString::fromStdString(tmp_data));
             default:
                 break;
@@ -143,16 +145,20 @@ public:
         QString qstring(qvar.toString());
         tmp_data = qstring.toStdString();
         std::cout << "model.data [name?] = " << tmp_data << std::endl;
-        return QFileSystemModel::data(index, role);
+        return qvar;
     }
 
+    // role
+    // return roleNames in dictionary container (key=int, value=string literal)
+    // key is enum offset by Qt::UserRole
+    // value is used for role property in qml
     QHash<int,QByteArray> roleNames() const Q_DECL_OVERRIDE
     {
-         QHash<int, QByteArray> result = QFileSystemModel::roleNames();
-         result.insert(SizeRole, QByteArrayLiteral("size"));
-         result.insert(DisplayableFilePermissionsRole, QByteArrayLiteral("displayableFilePermissions"));
-         result.insert(LastModifiedRole, QByteArrayLiteral("lastModified"));
-         return result;
+        QHash<int, QByteArray> result = QFileSystemModel::roleNames();
+        result.insert(SizeRole, QByteArrayLiteral("size"));
+        result.insert(DisplayableFilePermissionsRole, QByteArrayLiteral("displayableFilePermissions"));
+        result.insert(LastModifiedRole, QByteArrayLiteral("lastModified"));
+        return result;
     }
 };
 
@@ -166,10 +172,27 @@ int main(int argc, char *argv[])
     QFileSystemModel *fsm = new DisplayFileSystemModel(&engine);
     fsm->setRootPath(QDir::homePath());
     fsm->setResolveSymlinks(true);
+
+    // filter not working
+//    fsm->setNameFilters(QStringList()<<"*.exe");
+
     engine.rootContext()->setContextProperty("fileSystemModel", fsm);
     engine.rootContext()->setContextProperty("rootPathIndex", fsm->index(fsm->rootPath()));
-//    std::cout << "fsm->index(fsm->rootPath())" << fsm->index(fsm->rootPath()) << std::endl;
-    std::cout << "fsm->rootPath()" << fsm->rootPath().toStdString() << std::endl;
+    std::cout << "fsm->rootPath() = " << fsm->rootPath().toStdString() << std::endl;
+    std::cout << "fsm->index(fsm->rootPath()).row() = " << fsm->index(fsm->rootPath()).row() << std::endl;
+    std::cout << "fsm->index(fsm->rootPath()).column() = " << fsm->index(fsm->rootPath()).column() << std::endl;
+    std::cout << "fsm->index(fsm->rootPath()).parent().isValid() = " << fsm->index(fsm->rootPath()).parent().isValid() << std::endl;
+
+    std::cout << "file filters: " << fsm->nameFilters().size() << std::endl;
+    if(fsm->nameFilters().size() > 0)
+    {
+        std::cout << "file filters: " << std::endl;
+        std::cout << "file filters: " << fsm->nameFilters().at(0).toStdString() << std::endl;
+//        std::for_each(fsm->nameFilters().begin(),fsm->nameFilters().end(),[&](QString s)
+//        {
+//            std::cout << s.toStdString() << std::endl;
+//        });
+    }
     engine.load(QUrl(QStringLiteral("qrc:///main.qml")));
     if (engine.rootObjects().isEmpty())
         return -1;
