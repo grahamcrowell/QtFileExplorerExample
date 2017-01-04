@@ -41,6 +41,8 @@ ApplicationWindow {
         }
     }
 
+    // fileSystemModel
+
     ItemSelectionModel {
         id: sel
         model: fileSystemModel

@@ -55,6 +55,7 @@
 #include <QDateTime>
 #include <QDesktopServices>
 #include <QUrl>
+#include <iostream>
 
 static inline QString permissionString(const QFileInfo &fi)
 {
@@ -114,20 +115,34 @@ public:
 
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const Q_DECL_OVERRIDE
     {
+        std::string tmp_data {};
         if (index.isValid() && role >= SizeRole) {
+
             switch (role) {
             case SizeRole:
-                return QVariant(sizeString(fileInfo(index)));
+            	tmp_data = std::string(sizeString(fileInfo(index)).toStdString());
+            	std::cout << "model.data [SizeRole] = " << tmp_data << std::endl;
+                return QVariant(QString::fromStdString(tmp_data));
             case DisplayableFilePermissionsRole:
-                return QVariant(permissionString(fileInfo(index)));
+            	tmp_data = std::string(permissionString(fileInfo(index)).toStdString());
+            	std::cout << "model.data [DisplayableFilePermissionsRole] = " << tmp_data << std::endl;
+                return QVariant(QString::fromStdString(tmp_data));
             case LastModifiedRole:
-                return QVariant(fileInfo(index).lastModified().toString(Qt::SystemLocaleShortDate));
+            	tmp_data = std::string(fileInfo(index).lastModified().toString(Qt::SystemLocaleShortDate).toStdString());
+            	std::cout << "model.data [LastModifiedRole] = " << tmp_data << std::endl;
+                return QVariant(QString::fromStdString(tmp_data));
             case UrlStringRole:
-                return QVariant(QUrl::fromLocalFile(filePath(index)).toString());
+            	tmp_data = std::string(QUrl::fromLocalFile(filePath(index)).toString().toStdString());
+            	std::cout << "model.data [UrlStringRole] = " << tmp_data << std::endl;
+                return QVariant(QString::fromStdString(tmp_data));
             default:
                 break;
             }
         }
+        QVariant qvar(QFileSystemModel::data(index, role));
+        QString qstring(qvar.toString());
+        tmp_data = qstring.toStdString();
+        std::cout << "model.data [name?] = " << tmp_data << std::endl;
         return QFileSystemModel::data(index, role);
     }
 
@@ -153,6 +168,8 @@ int main(int argc, char *argv[])
     fsm->setResolveSymlinks(true);
     engine.rootContext()->setContextProperty("fileSystemModel", fsm);
     engine.rootContext()->setContextProperty("rootPathIndex", fsm->index(fsm->rootPath()));
+//    std::cout << "fsm->index(fsm->rootPath())" << fsm->index(fsm->rootPath()) << std::endl;
+    std::cout << "fsm->rootPath()" << fsm->rootPath().toStdString() << std::endl;
     engine.load(QUrl(QStringLiteral("qrc:///main.qml")));
     if (engine.rootObjects().isEmpty())
         return -1;
